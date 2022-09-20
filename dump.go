@@ -171,8 +171,13 @@ func createTable(db *sql.DB, name string, withValue bool) (*table, error) {
 func createTableSQL(db *sql.DB, name string) (string, error) {
 	var tableName sql.NullString
 	var tableSql sql.NullString
-	if err := db.QueryRow("SHOW CREATE TABLE "+name).Scan(&tableName, &tableSql); err != nil {
-		return "", err
+	var charsetClient sql.NullString
+	var collation sql.NullString
+
+	err := db.QueryRow("SHOW CREATE TABLE "+name).Scan(&tableName, &tableSql)
+	err2 := db.QueryRow("SHOW CREATE TABLE "+name).Scan(&tableName, &tableSql, &charsetClient, &collation)
+	if err != nil && err2 != nil {
+		return "", fmt.Errorf("%+v %+v", err, err2)
 	}
 
 	if tableName.String != name {
